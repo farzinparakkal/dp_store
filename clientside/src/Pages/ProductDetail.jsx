@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { ShoppingCart, Heart, Star, ArrowLeft, Plus, Minus } from 'lucide-react';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
@@ -13,6 +14,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuth();
+  const { showSuccess, showError, showWarning } = useToast();
 
   useEffect(() => {
     loadProduct();
@@ -31,7 +33,7 @@ const ProductDetail = () => {
 
   const addToCart = async () => {
     if (!isAuthenticated()) {
-      alert('Please login to add items to cart');
+      showWarning('Please login to add items to cart');
       navigate('/auth');
       return;
     }
@@ -42,10 +44,10 @@ const ProductDetail = () => {
         productId: product._id,
         quantity: quantity,
       });
-      alert('Product added to cart!');
+      showSuccess('Product added to cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Error adding product to cart');
+      showError('Error adding product to cart');
     }
   };
 

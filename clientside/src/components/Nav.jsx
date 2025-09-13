@@ -17,6 +17,20 @@ const Nav = () => {
     }
   }, [isAuthenticated, user]);
 
+  // Listen for cart updates from other components
+  useEffect(() => {
+    const handleCartUpdate = () => {
+      if (isAuthenticated() && user) {
+        loadCartCount();
+      }
+    };
+
+    window.addEventListener('cartUpdated', handleCartUpdate);
+    return () => {
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, [isAuthenticated, user]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -34,10 +48,14 @@ const Nav = () => {
   const loadCartCount = async () => {
     try {
       const response = await userAPI.getCart(user._id);
-      const totalItems = response.cartItems?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+      // Handle the backend response structure: { cart: { items: [...] } }
+      const cartItems = response.cart?.items || [];
+      const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0) || 0;
       setCartCount(totalItems);
     } catch (error) {
       console.error('Error loading cart count:', error);
+      // Set cart count to 0 on error to prevent UI issues
+      setCartCount(0);
     }
   };
 
@@ -59,14 +77,12 @@ const Nav = () => {
 
   const handleProfile = () => {
     setIsDropdownOpen(false);
-    // TODO: Navigate to profile page
-    console.log('Navigate to profile');
+    navigate('/profile');
   };
 
   const handleMyOrders = () => {
     setIsDropdownOpen(false);
-    // TODO: Navigate to orders page
-    console.log('Navigate to my orders');
+    navigate('/my-orders');
   };
 
   const handleLogout = () => {
@@ -75,37 +91,37 @@ const Nav = () => {
   };
 
   return (
-    <nav className="bg-gray-50 shadow-sm border-b border-gray-200">
+    <nav className="fixed top-0 left-0 w-full bg-gray-50 shadow-sm border-b border-gray-200 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Left: Logo and Store Info */}
-          <div 
-            className="flex items-center space-x-4 cursor-pointer" 
+          <div
+            className="flex items-center space-x-4 cursor-pointer"
             onClick={() => navigate('/')}
           >
-            <div className="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-xl">D</span>
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Diapers Store</h1>
+              <h1 className="text-2xl font-semibold text-cyan-600">Diapers Store</h1>
               <p className="text-base text-gray-600">Premium baby care products</p>
             </div>
           </div>
 
           {/* Right: Login and Cart */}
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-4">
             {isAuthenticated() ? (
               <div className="relative" ref={dropdownRef}>
-                <button 
+                <button
                   onClick={toggleDropdown}
                   className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none"
                 >
-                  <div className="w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold text-sm">
                       {user.name ? user.name.charAt(0).toUpperCase() : 'A'}
                     </span>
                   </div>
-                  
+
                 </button>
 
                 {/* Dropdown Menu */}
@@ -116,7 +132,7 @@ const Nav = () => {
                       <p className="text-sm font-medium text-gray-900">{user.name || 'Account'}</p>
                       <p className="text-sm text-gray-500">{user.email}</p>
                     </div>
-                    
+
                     <button
                       onClick={handleProfile}
                       className="flex items-center space-x-3 w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50"
@@ -143,21 +159,34 @@ const Nav = () => {
                 )}
               </div>
             ) : (
-              <button 
+              <button
                 onClick={handleLogin}
-                className="text-cyan-500 hover:text-cyan-600 font-medium text-lg"
+                className="text-cyan-500 hover:text-cyan-600 font-small text-sm border border-cyan-400 px-4 py-1 rounded-lg"
               >
                 Login
               </button>
             )}
-            
-            <button 
+
+            <button
               onClick={handleCart}
-              className="flex items-center space-x-2 text-gray-600 hover:text-cyan-500"
+              className="relative flex gap-2 items-center justify-center w-16 h-8 border border-cyan-400 rounded-lg hover:bg-cyan-50 transition"
             >
-              <ShoppingCart className="w-7 h-7" />
-              <span className="font-medium text-lg">{isAuthenticated() ? cartCount : 0}</span>
+              {/* Cart Icon */}
+              <ShoppingCart className="w-4 h-4 text-cyan-500 hover:text-gray-800" />
+
+              {/* Cart Count */}
+              <span className="ml-1 text-cyan-600 font-semibold">
+                {isAuthenticated() ? cartCount : 0}
+              </span>
+
+              {/* Notification Badge */}
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full hover:text-gray-800">
+                  {cartCount}
+                </span>
+              )}
             </button>
+
           </div>
         </div>
       </div>

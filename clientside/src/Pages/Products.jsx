@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { userAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { ShoppingCart, Heart, Star, Filter, Search } from 'lucide-react';
 import Nav from '../components/Nav';
 import Footer from '../components/Footer';
 
 const Products = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,6 +16,7 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showOnlyOffers, setShowOnlyOffers] = useState(false);
   const { user, isAuthenticated } = useAuth();
+  const { showSuccess, showError, showWarning } = useToast();
 
   useEffect(() => {
     loadProducts();
@@ -42,7 +46,7 @@ const Products = () => {
 
   const addToCart = async (product) => {
     if (!isAuthenticated()) {
-      alert('Please login to add items to cart');
+      showWarning('Please login to add items to cart');
       return;
     }
 
@@ -52,10 +56,10 @@ const Products = () => {
         productId: product._id,
         quantity: 1,
       });
-      alert('Product added to cart!');
+      showSuccess('Product added to cart!');
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Error adding product to cart');
+      showError('Error adding product to cart');
     }
   };
 

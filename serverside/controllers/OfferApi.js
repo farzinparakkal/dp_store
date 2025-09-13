@@ -50,23 +50,18 @@ exports.createOffer = async (req, res) => {
     console.log('Received offer creation request:', req.body);
     console.log('Received files:', req.file);
     
-    const { title, description, discount } = req.body;
-    if (!title || !description) {
-      return res.status(400).json({ error: "Title and description are required" });
+    // Validate image upload
+    if (!req.file) {
+      return res.status(400).json({ error: "Image is required" });
     }
 
     const offerData = {
-      title,
-      description,
-      discount: discount ? parseFloat(discount) : 0,
+      image: `/uploads/${req.file.filename}`,
+      isActive: req.body.isActive === 'true' || req.body.isActive === true,
       createdBy: req.user ? req.user._id : null
     };
 
-    // Handle image upload
-    if (req.file) {
-      offerData.image = `/uploads/${req.file.filename}`;
-      console.log('Image uploaded:', offerData.image);
-    }
+    console.log('Creating offer with data:', offerData);
 
     const newOffer = new Offer(offerData);
     await newOffer.save();
@@ -102,7 +97,7 @@ exports.updateOffer = async (req, res) => {
     console.log('Received files:', req.file);
     
     const { offerId } = req.params;
-    const updates = req.body;
+    const updates = {};
 
     const offer = await Offer.findById(offerId);
     if (!offer) {
@@ -115,8 +110,12 @@ exports.updateOffer = async (req, res) => {
       console.log('New image uploaded:', updates.image);
     }
 
-    // Convert string values to appropriate types
-    if (updates.discount) updates.discount = parseFloat(updates.discount);
+    // Handle isActive status
+    if (req.body.isActive !== undefined) {
+      updates.isActive = req.body.isActive === 'true' || req.body.isActive === true;
+    }
+
+    console.log('Updating offer with:', updates);
 
     Object.assign(offer, updates); // Merge changes
     await offer.save();

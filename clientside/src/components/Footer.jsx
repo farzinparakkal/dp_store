@@ -12,7 +12,7 @@ const Footer = () => {
           {/* Company Info */}
           <div>
             <div className="flex items-center mb-4">
-              <div className="bg-cyan-500 text-white p-2 rounded-lg mr-3">
+              <div className="bg-cyan-500 text-white px-2 py-1 rounded-lg mr-3">
                 <span className="text-xl font-bold">D</span>
               </div>
               <div>

@@ -36,7 +36,7 @@ exports.createProduct = async (req, res) => {
         console.log('Received product creation request:', req.body);
         console.log('Received files:', req.files);
         
-        const { name, description, price, category, size, stock, onOffer, outOfStock } = req.body;
+        const { name, description, price, category, size, stock, count, originalPrice, onOffer, outOfStock } = req.body;
         
         console.log('Extracted fields:', { name, description, price, category, size, stock, onOffer, outOfStock });
         
@@ -60,8 +60,10 @@ exports.createProduct = async (req, res) => {
             image: imagePath,
             size,
             stock,
-            onOffer,
-            outOfStock
+            count,
+            originalPrice: originalPrice ? parseFloat(originalPrice) : undefined,
+            onOffer: onOffer === 'true' || onOffer === true,
+            outOfStock: outOfStock === 'true' || outOfStock === true
         });
 
         console.log('Created product object:', product);
@@ -114,8 +116,10 @@ exports.updateProduct = async (req, res) => {
 
         // Convert string values to appropriate types
         if (updates.price) updates.price = parseFloat(updates.price);
+        if (updates.originalPrice) updates.originalPrice = parseFloat(updates.originalPrice);
         if (updates.stock) updates.stock = parseInt(updates.stock);
-        if (updates.onOffer) updates.onOffer = updates.onOffer === 'true';
+        if (updates.onOffer !== undefined) updates.onOffer = updates.onOffer === 'true' || updates.onOffer === true;
+        if (updates.outOfStock !== undefined) updates.outOfStock = updates.outOfStock === 'true' || updates.outOfStock === true;
 
         Object.assign(product, updates); // Merge changes
         await product.save();

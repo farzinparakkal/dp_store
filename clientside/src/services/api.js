@@ -15,14 +15,26 @@ const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.message || 'API request failed');
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch (parseError) {
+        console.error('Failed to parse error response:', parseError);
+      }
+      throw new Error(errorMessage);
     }
     
+    const data = await response.json();
     return data;
   } catch (error) {
+    console.error('API Request Error:', {
+      endpoint,
+      error: error.message,
+      stack: error.stack
+    });
     throw error;
   }
 };
@@ -68,6 +80,11 @@ export const userAPI = {
   getCartTotal: (userId) =>
     apiRequest(`/user/cart/total/${userId}`),
 
+  clearCart: (userId) =>
+    apiRequest(`/user/cart/clear/${userId}`, {
+      method: 'DELETE',
+    }),
+
   // Product operations
   getAllProducts: () =>
     apiRequest('/user/products'),
@@ -87,6 +104,28 @@ export const userAPI = {
   
   getAllOffers: () =>
     apiRequest('/user/offers'),
+
+  // Profile operations
+  getProfile: (userId) =>
+    apiRequest(`/user/profile/${userId}`),
+  
+  updateProfile: (userId, profileData) =>
+    apiRequest(`/user/profile/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    }),
+
+  // Order operations
+  placeOrder: (userId, orderData) =>
+    apiRequest(`/user/order/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    }),
+
+  getOrders: (userId) =>
+    apiRequest(`/user/orders/${userId}`, {
+      method: 'GET',
+    }),
 };
 
 // Admin API
